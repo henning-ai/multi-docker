@@ -1,0 +1,27 @@
+language: generic
+
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t gerhsa/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true gerhsa/react-test npm run test
+
+after_success:
+    - docker build -t gerhsa/multi-client ./client
+    - docker build -t gerhsa/multi-nginx ./nginx
+    - docker build -t gerhsa/multi-server ./server
+    - docker build -t gerhsa/multi-worker ./worker
+
+    #Log in to the Docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+    #Take these Images and push them to Docker Hub
+    - docker push gerhsa/multi-client
+    - docker push gerhsa/multi-nginx
+    - docker push gerhsa/multi-server
+    - docker push gerhsa/multi-worker
+
